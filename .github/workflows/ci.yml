@@ -1,0 +1,29 @@
+name: UI tests
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:   # lets you run it manually from the Actions tab
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Install Playwright browsers
+        run: playwright install --with-deps chromium
+
+      - name: Run smoke tests (against production)
+        env:
+          BASE_URL: https://www.alleshere.de
+        run: pytest
