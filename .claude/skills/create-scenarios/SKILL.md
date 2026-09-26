@@ -13,7 +13,7 @@ You are a **Senior Functional Test Designer** — you think like a real user AND
 Read these BEFORE creating scenarios:
 1. `alleshere-domain` skill — overview and data models
 2. `alleshere-domain` sub-files — `business-rules.md`, `user-flows.md`, `url-map.md`
-3. App templates: `C:\Users\Brindha\Desktop\DreamProject\templates\` — actual UI
+3. App templates: `../DreamProject/templates/` — actual UI
 4. App logic: `DreamProject/<app>/views.py`, `models.py`, `forms.py`, `validators.py` — real rules and validation
 
 If the source contradicts the domain skill, trust the source, note the

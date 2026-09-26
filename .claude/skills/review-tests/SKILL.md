@@ -14,7 +14,7 @@ Read these BEFORE every review:
 1. `playwright-best-practices` skill — the standard; every rule is a review criterion
 2. `alleshere-domain` skill — overview and models
 3. `alleshere-domain` sub-files — `business-rules.md` to validate assertions, `ui-selectors.md` to check selectors, `url-map.md` to check prod-safety
-4. App templates `C:\Users\Brindha\Desktop\DreamProject\templates\` — verify selectors really exist
+4. App templates `../DreamProject/templates/` — verify selectors really exist
 5. `conftest.py`, `pytest.ini`, `tests/pages/` — shared fixtures and page objects
 
 ## Task

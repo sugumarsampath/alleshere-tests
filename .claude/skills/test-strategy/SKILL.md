@@ -15,7 +15,7 @@ Read these BEFORE deciding:
 1. `docs/test-scenarios.md` — output of `/create-scenarios` (primary input)
 2. `alleshere-domain` skill + `business-rules.md`, `url-map.md` — what lives where
 3. `playwright-best-practices` skill — E2E standards
-4. App source `C:\Users\Brindha\Desktop\DreamProject\`:
+4. App source `../DreamProject/`:
    - `<app>/models.py` — model methods/properties (`Listing.public`, `embed_url`, `Conversation.for_user`, `DirectoryListing.search`, …) → unit candidates
    - `<app>/views.py`, `forms.py`, `validators.py` → view-test candidates
    - `<app>/tests.py` — existing Django tests (don't duplicate; flag gaps)

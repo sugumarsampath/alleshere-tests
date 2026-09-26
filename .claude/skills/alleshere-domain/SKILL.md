@@ -15,7 +15,7 @@ marketplace, content guides and banner ads.
 
 - **Live site**: https://www.alleshere.de/ (always use `https://www.` form)
 - **Local dev**: http://127.0.0.1:8000 (`.\venv\Scripts\python manage.py runserver` in the app repo)
-- **App source**: `C:\Users\Brindha\Desktop\DreamProject` (Django package dir is `berlinnest/` — internal name)
+- **App source**: private repo, checked out as a sibling folder `../DreamProject` (Django package dir is `berlinnest/` — internal name)
 - **This repo** (`alleshere-tests`) holds only the Playwright UI suite.
 
 ## Tech stack

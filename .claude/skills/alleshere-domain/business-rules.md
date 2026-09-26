@@ -9,7 +9,7 @@ and tests can trace back to it. Source file in brackets.
 - **BR-AUTH-3** Password: **min 7, max 16 chars, ≥1 capital letter, ≥1 number** (plus Django's common/numeric/similarity validators). Errors: "Password must contain at least 1 capital letter.", "Password must contain at least 1 number.", "Password must be at most 16 characters."
 - **BR-AUTH-4** Successful registration logs the user in, redirects to `/`, flash "Welcome to AllesHere! Your account is ready."
 - **BR-AUTH-5** Wrong login → "Incorrect email or password. Please try again."
-- **BR-AUTH-6** Login redirects to `?next=` if present, else `/`. ⚠️ `next` is currently **not validated** — an external URL is followed (open-redirect; a Security scenario should cover it).
+- **BR-AUTH-6** Login redirects to `?next=` if it is a same-site path, else `/`. External or scheme-relative targets (`https://evil.example`, `//evil.example`) fall back to `/` (open-redirect protection — cover it with a Security scenario).
 - **BR-AUTH-7** Logout is a **POST** form (navbar "Logout" button), redirects to `/`.
 - **BR-AUTH-8** Password reset via email (`/accounts/password-reset/`); sends real email through Gmail SMTP when configured → **local only**, and the link uses the request host.
 

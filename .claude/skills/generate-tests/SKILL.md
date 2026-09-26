@@ -17,7 +17,7 @@ Read these BEFORE writing any test:
 3. `alleshere-domain` sub-files — `ui-selectors.md` (selectors), `business-rules.md` (assertions), `user-flows.md` (steps), `url-map.md` (prod-safe vs local)
 4. `docs/test-strategy.md` if present — only write the scenarios assigned to E2E
 5. `tests/test_*.py`, `conftest.py`, `tests/pages/` — match existing patterns and reuse fixtures/page objects
-6. App templates `C:\Users\Brindha\Desktop\DreamProject\templates\` — confirm selectors exist in source
+6. App templates `../DreamProject/templates/` — confirm selectors exist in source
 
 ## Task
 Generate Playwright tests for: `$ARGUMENTS`
