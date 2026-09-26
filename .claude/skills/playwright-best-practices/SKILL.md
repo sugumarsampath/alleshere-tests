@@ -41,28 +41,21 @@ Default target is the **live site**, so tests are split:
 | **Read-only** | page loads, headings, navbar/footer links, filters, search | Production + local |
 | **Mutating** | register, login, post/edit listing, send message, contact form (sends a real email) | **Local dev server only** |
 
-Mark mutating tests and skip them unless running locally:
+Mark mutating tests with the `local_only` marker (registered in `pytest.ini`;
+`--strict-markers` makes typos fail):
 
 ```python
 import pytest
 
-local_only = pytest.mark.local_only  # register the marker in pytest.ini
-
-@local_only
+@pytest.mark.local_only
 def test_post_listing(page: Page, base_url):
     ...
 ```
 
-```python
-# conftest.py
-def pytest_collection_modifyitems(config, items):
-    if "127.0.0.1" in BASE or "localhost" in BASE:
-        return
-    skip = pytest.mark.skip(reason="mutating test — local server only")
-    for item in items:
-        if "local_only" in item.keywords:
-            item.add_marker(skip)
-```
+`conftest.py` (`pytest_collection_modifyitems`) skips every `local_only` test
+unless `BASE_URL`'s host is `localhost`, `127.0.0.1`, `::1`, `*.localhost` or
+`*.test` — so a forgotten `BASE_URL` fails safe (skipped, not run on prod).
+Apply to a whole file with `pytestmark = pytest.mark.local_only`.
 
 **Never** submit forms, post listings, or send messages against production.
 

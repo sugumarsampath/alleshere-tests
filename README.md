@@ -47,13 +47,20 @@ Copy the generated code into a new file under `tests/`.
 | Path | What |
 |---|---|
 | `tests/` | test files (`test_*.py`) |
-| `conftest.py` | shared fixtures — `base_url`, viewport |
-| `pytest.ini` | default options (headed Chromium) |
+| `conftest.py` | shared fixtures — `base_url`, viewport; skips `local_only` tests off-localhost |
+| `pytest.ini` | default options (headless Chromium) + `local_only` marker |
 | `.github/workflows/ci.yml` | runs the suite headless on every push/PR |
 
 ## Notes
 
 - The smoke tests are **read-only** (no posting / form submission), so they're
   safe to run against the live site.
-- Add write-path tests (login, post a listing) as separate files and prefer
-  running those against a **local** or staging server, not production.
+- Tests that create or change data (register, post a listing, messaging,
+  contact form) must be marked `@pytest.mark.local_only`. They are **skipped
+  automatically** unless `BASE_URL` points at a local server, so they can
+  never run against production:
+
+  ```powershell
+  $env:BASE_URL="http://127.0.0.1:8000"; pytest     # runs everything
+  pytest                                            # prod: local_only tests skipped
+  ```
