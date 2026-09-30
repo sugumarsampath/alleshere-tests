@@ -5,12 +5,21 @@ on:
     branches: [master, main]
   pull_request:
   workflow_dispatch:   # lets you run it manually from the Actions tab
+  repository_dispatch: # lets the alleshere dev repo (alleshere/alleshere) trigger this on every code change
+    types: [dev-code-changed]
 
 jobs:
   playwright:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Log trigger source
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          echo "Triggered by dev repo push"
+          echo "Dev repo SHA: ${{ github.event.client_payload.sha }}"
+          echo "Dev repo ref: ${{ github.event.client_payload.ref }}"
 
       - uses: actions/setup-python@v5
         with:
