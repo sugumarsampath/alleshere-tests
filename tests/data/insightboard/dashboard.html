@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Insightboard — QE Challenge Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0e1420;
+    --bg-elev:#151d2e;
+    --bg-tile:#1a2436;
+    --line:#26324a;
+    --line-soft:#1f2b40;
+    --text:#e7edf7;
+    --text-dim:#8fa0bd;
+    --text-faint:#5f6f8c;
+    --accent:#3ec7c2;     /* teal — primary signal */
+    --accent-2:#f2b134;   /* amber — attention */
+    --accent-3:#8a7dff;   /* violet — secondary series */
+    --good:#4ad991;
+    --bad:#ff6b6b;
+    --radius:14px;
+    --shadow:0 1px 0 rgba(255,255,255,.03), 0 8px 24px rgba(0,0,0,.35);
+    --font:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    --mono:"SF Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(62,199,194,.08), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--font);
+    font-size:15px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  #sidebar{
+    background:var(--bg-elev);
+    border-right:1px solid var(--line);
+    padding:22px 14px;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 10px 22px}
+  .brand-mark{
+    width:30px;height:30px;border-radius:8px;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--accent),var(--accent-3));
+    display:grid;place-items:center;color:#06131a;font-weight:800;font-size:16px;
+  }
+  .brand-name{font-weight:700;letter-spacing:.2px}
+  .brand-name small{display:block;font-weight:500;color:var(--text-faint);font-size:11px;letter-spacing:.6px;text-transform:uppercase}
+  .nav-label{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--text-faint);padding:6px 12px 4px}
+  .nav-item{
+    display:flex;align-items:center;gap:12px;
+    padding:11px 12px;border-radius:10px;
+    color:var(--text-dim);text-decoration:none;cursor:pointer;
+    font-weight:500;border:1px solid transparent;
+    transition:background .15s,color .15s,border-color .15s;
+    background:none;width:100%;text-align:left;font-size:15px;font-family:inherit;
+  }
+  .nav-item:hover{background:var(--bg-tile);color:var(--text)}
+  .nav-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .nav-item.active{background:rgba(62,199,194,.12);color:var(--text);border-color:rgba(62,199,194,.3)}
+  .nav-item .ic{width:18px;height:18px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:1.8}
+  .nav-spacer{flex:1}
+  .nav-foot{padding:12px;color:var(--text-faint);font-size:12px;border-top:1px solid var(--line);margin-top:8px}
+
+  /* ---------- Main ---------- */
+  main{padding:22px 28px 40px;min-width:0}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    margin-bottom:24px;flex-wrap:wrap;
+  }
+  .topbar h1{font-size:22px;margin:0;font-weight:700;letter-spacing:.2px}
+  .topbar .sub{color:var(--text-dim);font-size:13px;margin-top:3px}
+  .topbar-right{display:flex;align-items:center;gap:14px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--text-faint)}
+  select#client-dropdown{
+    appearance:none;
+    background:var(--bg-tile);
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 38px 10px 14px;
+    font-size:14px;font-family:inherit;min-width:210px;cursor:pointer;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238fa0bd' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;
+  }
+  select#client-dropdown:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-color:var(--accent)}
+  .avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent-3),var(--accent));display:grid;place-items:center;font-weight:700;color:#06131a}
+
+  /* ---------- Tiles ---------- */
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}
+  .tile{
+    background:var(--bg-tile);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    box-shadow:var(--shadow);
+    min-width:0;
+  }
+  .tile h3{margin:0 0 2px;font-size:13px;font-weight:600;color:var(--text-dim);letter-spacing:.3px}
+  .tile .cap{font-size:12px;color:var(--text-faint);margin-bottom:14px}
+  .kpi{font-size:32px;font-weight:750;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+  .kpi .unit{font-size:16px;color:var(--text-dim);font-weight:600;margin-left:2px}
+  .delta{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;margin-top:8px;padding:3px 8px;border-radius:999px}
+  .delta.up{color:var(--good);background:rgba(74,217,145,.12)}
+  .delta.down{color:var(--bad);background:rgba(255,107,107,.12)}
+  .span3{grid-column:span 3}
+  .span4{grid-column:span 4}
+  .span6{grid-column:span 6}
+  .span8{grid-column:span 8}
+  .chart-wrap{position:relative;height:230px}
+  .chart-wrap.short{height:200px}
+  .tile-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap}
+  .legend span{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim)}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+  .page-note{margin:26px 2px 0;color:var(--text-faint);font-size:12px}
+
+  @media (max-width:960px){
+    .app{grid-template-columns:1fr}
+    #sidebar{flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px}
+    .nav-label,.nav-foot,.nav-spacer{display:none}
+    .span3,.span4,.span6,.span8{grid-column:span 12}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside id="sidebar" aria-label="Primary navigation">
+    <div class="brand">
+      <div class="brand-mark">Q</div>
+      <div class="brand-name">Insightboard<small>QE Challenge</small></div>
+    </div>
+
+    <div class="nav-label">Workspace</div>
+    <nav id="main-menu">
+      <button class="nav-item active" id="menu-teams" data-testid="nav-teams" data-view="Teams" aria-current="page">
+        <svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M15 8a3 3 0 1 0-.5-5.9"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M15 14a6 6 0 0 1 6 6"/></svg>
+        Teams
+      </button>
+      <button class="nav-item" id="menu-surveys" data-testid="nav-surveys" data-view="Surveys">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M9 3h6a2 2 0 0 1 2 2v14l-5-3-5 3V5a2 2 0 0 1 2-2z"/></svg>
+        Surveys
+      </button>
+      <button class="nav-item" id="menu-reports" data-testid="nav-reports" data-view="Reports">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 3h9l6 6v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M8 13h8M8 17h5"/></svg>
+        Reports
+      </button>
+      <button class="nav-item" id="menu-statistics" data-testid="nav-statistics" data-view="Statistics">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        Statistics
+      </button>
+      <button class="nav-item" id="menu-actions" data-testid="nav-actions" data-view="Actions">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+        Actions
+      </button>
+    </nav>
+
+    <div class="nav-spacer"></div>
+    <div class="nav-foot" id="active-view-note">Viewing: <span id="active-view-label">Teams</span></div>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <main>
+    <div class="topbar">
+      <div>
+        <h1 id="page-title">Teams Overview</h1>
+        <div class="sub" id="page-subtitle">Live feedback metrics for the selected client</div>
+      </div>
+      <div class="topbar-right">
+        <div class="field">
+          <label for="client-dropdown">Client</label>
+          <select id="client-dropdown" data-testid="client-dropdown" aria-label="Select client">
+            <option value="1">Test Client 1</option>
+            <option value="2">Test Client 2</option>
+            <option value="3">Test Client 3</option>
+            <option value="4">Test Client 4</option>
+            <option value="5">Test Client 5</option>
+            <option value="6">Test Client 6</option>
+            <option value="7">Test Client 7</option>
+            <option value="8">Test Client 8</option>
+          </select>
+        </div>
+        <div class="avatar" id="user-avatar" title="Signed in as QE Candidate">QE</div>
+      </div>
+    </div>
+
+    <section class="grid" id="dashboard-grid">
+
+      <!-- KPI tiles -->
+      <div class="tile span3" id="tile-nps" data-testid="tile-nps">
+        <h3>Net Promoter Score</h3>
+        <div class="cap">Rolling 30 days</div>
+        <div class="kpi" id="kpi-nps">—</div>
+        <div class="delta up" id="delta-nps" data-testid="delta-nps">▲ 0%</div>
+      </div>
+
+      <div class="tile span3" id="tile-response-rate" data-testid="tile-response-rate">
+        <h3>Response Rate</h3>
+        <div class="cap">Invitations answered</div>
+        <div class="kpi" id="kpi-response-rate">—<span class="unit">%</span></div>
+        <div class="delta up" id="delta-response-rate" data-testid="delta-response-rate">▲ 0%</div>
+      </div>
+
+      <div class="tile span3" id="tile-surveys-completed" data-testid="tile-surveys-completed">
+        <h3>Surveys Completed</h3>
+        <div class="cap">This quarter</div>
+        <div class="kpi" id="kpi-surveys-completed">—</div>
+        <div class="delta up" id="delta-surveys-completed" data-testid="delta-surveys-completed">▲ 0%</div>
+      </div>
+
+      <div class="tile span3" id="tile-open-actions" data-testid="tile-open-actions">
+        <h3>Open Actions</h3>
+        <div class="cap">Awaiting follow-up</div>
+        <div class="kpi" id="kpi-open-actions">—</div>
+        <div class="delta down" id="delta-open-actions" data-testid="delta-open-actions">▼ 0%</div>
+      </div>
+
+      <!-- Trend line chart -->
+      <div class="tile span8" id="tile-satisfaction-trend" data-testid="tile-satisfaction-trend">
+        <div class="tile-head">
+          <div>
+            <h3>Satisfaction Trend</h3>
+            <div class="cap">Monthly average score vs. survey volume</div>
+          </div>
+          <div class="legend">
+            <span><i class="dot" style="background:var(--accent)"></i>Satisfaction</span>
+            <span><i class="dot" style="background:var(--accent-3)"></i>Volume</span>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-satisfaction-trend"></canvas></div>
+      </div>
+
+      <!-- Sentiment doughnut -->
+      <div class="tile span4" id="tile-sentiment" data-testid="tile-sentiment">
+        <div class="tile-head">
+          <div>
+            <h3>Sentiment Split</h3>
+            <div class="cap">Latest survey wave</div>
+          </div>
+        </div>
+        <div class="chart-wrap short"><canvas id="chart-sentiment"></canvas></div>
+      </div>
+
+      <!-- Responses per team bar chart -->
+      <div class="tile span6" id="tile-team-responses" data-testid="tile-team-responses">
+        <div class="tile-head">
+          <div>
+            <h3>Responses by Team</h3>
+            <div class="cap">Completed surveys per team</div>
+          </div>
+        </div>
+        <div class="chart-wrap short"><canvas id="chart-team-responses"></canvas></div>
+      </div>
+
+      <!-- Channel radar chart -->
+      <div class="tile span6" id="tile-channels" data-testid="tile-channels">
+        <div class="tile-head">
+          <div>
+            <h3>Feedback Channels</h3>
+            <div class="cap">Score by collection channel</div>
+          </div>
+        </div>
+        <div class="chart-wrap short"><canvas id="chart-channels"></canvas></div>
+      </div>
+
+    </section>
+
+    <p class="page-note" id="footer-note">
+      Demo data regenerates deterministically per client. Selecting a client updates every tile —
+      use it to assert dynamic state in your test scenarios.
+    </p>
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Deterministic pseudo-data per client (stable across reloads) ----
+  const TEAMS = ["Support", "Sales", "Onboarding", "Product", "Billing"];
+  const CHANNELS = ["Email", "In-app", "SMS", "Phone", "Web"];
+
+  function seeded(id) {
+    // Deterministic per client (stable across reloads) but decorrelated across
+    // clients: hash the id, then draw from a mulberry32 PRNG. Because the hash
+    // is non-linear, neighbouring client ids produce unrelated sequences.
+    let a = Math.imul(id ^ 0x9e3779b9, 2654435761) >>> 0;
+    a ^= a >>> 15; a = Math.imul(a, 2246822519) >>> 0; a ^= a >>> 13;
+    return function () {
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function buildClientData(id) {
+    const rnd = seeded(id);
+    const r = (min, max) => Math.round(min + rnd() * (max - min));
+    const nps = r(-10, 72);
+    const months = ["Jan","Feb","Mar","Apr","May","Jun"];
+    return {
+      nps,
+      responseRate: r(38, 92),
+      surveysCompleted: r(420, 3800),
+      openActions: r(3, 47),
+      deltas: {
+        nps: r(-8, 14), responseRate: r(-6, 11),
+        surveysCompleted: r(-5, 22), openActions: r(-18, 9)
+      },
+      trend: {
+        labels: months,
+        satisfaction: months.map(() => r(58, 95)),
+        volume: months.map(() => r(120, 640))
+      },
+      sentiment: [r(45, 80), r(10, 30), r(5, 25)], // pos / neutral / neg
+      teamResponses: TEAMS.map(() => r(60, 520)),
+      channels: CHANNELS.map(() => r(40, 95))
+    };
+  }
+
+  // ---- Chart theme ----
+  Chart.defaults.color = "#8fa0bd";
+  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  Chart.defaults.borderColor = "rgba(38,50,74,.7)";
+  const ACCENT = "#3ec7c2", ACCENT2 = "#f2b134", ACCENT3 = "#8a7dff",
+        GOOD = "#4ad991", BAD = "#ff6b6b";
+
+  let charts = {};
+
+  function makeCharts(d) {
+    Object.values(charts).forEach(c => c && c.destroy());
+    charts = {};
+
+    charts.trend = new Chart(document.getElementById("chart-satisfaction-trend"), {
+      data: {
+        labels: d.trend.labels,
+        datasets: [
+          { type:"line", label:"Satisfaction", data:d.trend.satisfaction, yAxisID:"y",
+            borderColor:ACCENT, backgroundColor:"rgba(62,199,194,.15)", fill:true,
+            tension:.35, pointRadius:3, pointBackgroundColor:ACCENT, borderWidth:2 },
+          { type:"bar", label:"Volume", data:d.trend.volume, yAxisID:"y1",
+            backgroundColor:"rgba(138,125,255,.45)", borderRadius:5, barThickness:22 }
+        ]
+      },
+      options: {
+        maintainAspectRatio:false, responsive:true,
+        plugins:{ legend:{display:false} },
+        scales:{
+          y:{ position:"left", min:0, max:100, grid:{color:"rgba(38,50,74,.5)"} },
+          y1:{ position:"right", min:0, grid:{drawOnChartArea:false} }
+        }
+      }
+    });
+
+    charts.sentiment = new Chart(document.getElementById("chart-sentiment"), {
+      type:"doughnut",
+      data:{ labels:["Positive","Neutral","Negative"],
+        datasets:[{ data:d.sentiment, backgroundColor:[GOOD, ACCENT2, BAD],
+          borderColor:"#1a2436", borderWidth:3, hoverOffset:6 }] },
+      options:{ maintainAspectRatio:false, responsive:true, cutout:"62%",
+        plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, padding:14 } } } }
+    });
+
+    charts.teams = new Chart(document.getElementById("chart-team-responses"), {
+      type:"bar",
+      data:{ labels:TEAMS,
+        datasets:[{ label:"Responses", data:d.teamResponses,
+          backgroundColor:ACCENT, borderRadius:6, barThickness:26 }] },
+      options:{ maintainAspectRatio:false, responsive:true,
+        plugins:{ legend:{display:false} },
+        scales:{ y:{ beginAtZero:true, grid:{color:"rgba(38,50,74,.5)"} }, x:{ grid:{display:false} } } }
+    });
+
+    charts.channels = new Chart(document.getElementById("chart-channels"), {
+      type:"radar",
+      data:{ labels:CHANNELS,
+        datasets:[{ label:"Score", data:d.channels,
+          borderColor:ACCENT3, backgroundColor:"rgba(138,125,255,.2)",
+          pointBackgroundColor:ACCENT3, borderWidth:2 }] },
+      options:{ maintainAspectRatio:false, responsive:true,
+        plugins:{ legend:{display:false} },
+        scales:{ r:{ min:0, max:100, angleLines:{color:"rgba(38,50,74,.7)"},
+          grid:{color:"rgba(38,50,74,.7)"}, pointLabels:{color:"#8fa0bd"}, ticks:{display:false} } } }
+    });
+  }
+
+  function setDelta(el, val, invert) {
+    const positiveIsGood = !invert;
+    const up = val >= 0;
+    const good = up === positiveIsGood;
+    el.className = "delta " + (good ? "up" : "down");
+    el.textContent = (up ? "▲ " : "▼ ") + Math.abs(val) + "%";
+  }
+
+  function render(clientId) {
+    const d = buildClientData(Number(clientId));
+    document.getElementById("kpi-nps").textContent = d.nps;
+    document.getElementById("kpi-response-rate").innerHTML = d.responseRate + '<span class="unit">%</span>';
+    document.getElementById("kpi-surveys-completed").textContent = d.surveysCompleted.toLocaleString();
+    document.getElementById("kpi-open-actions").textContent = d.openActions;
+
+    setDelta(document.getElementById("delta-nps"), d.deltas.nps, false);
+    setDelta(document.getElementById("delta-response-rate"), d.deltas.responseRate, false);
+    setDelta(document.getElementById("delta-surveys-completed"), d.deltas.surveysCompleted, false);
+    setDelta(document.getElementById("delta-open-actions"), d.deltas.openActions, true); // fewer open actions is good
+
+    makeCharts(d);
+  }
+
+  // ---- Sidebar navigation (updates title only; single-page demo) ----
+  const VIEW_TITLES = {
+    Teams:      ["Teams Overview", "Live feedback metrics for the selected client"],
+    Surveys:    ["Surveys", "Delivery, completion and drop-off across waves"],
+    Reports:    ["Reports", "Generated summaries and exports"],
+    Statistics: ["Statistics", "Aggregated trends and distributions"],
+    Actions:    ["Actions", "Follow-up items raised from feedback"]
+  };
+
+  document.querySelectorAll("#main-menu .nav-item").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#main-menu .nav-item").forEach(b => {
+        b.classList.remove("active"); b.removeAttribute("aria-current");
+      });
+      btn.classList.add("active"); btn.setAttribute("aria-current", "page");
+      const view = btn.dataset.view;
+      const [title, sub] = VIEW_TITLES[view];
+      document.getElementById("page-title").textContent = title;
+      document.getElementById("page-subtitle").textContent = sub;
+      document.getElementById("active-view-label").textContent = view;
+    });
+  });
+
+  // ---- Client dropdown ----
+  const dropdown = document.getElementById("client-dropdown");
+  dropdown.addEventListener("change", e => render(e.target.value));
+
+  // initial paint
+  render(dropdown.value);
+})();
+</script>
+</body>
+</html>
